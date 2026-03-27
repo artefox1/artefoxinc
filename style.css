@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  background: #ffffff;
+  color: #000000;
+
+  display: flex;
+  justify-content: center;  /* horizontal center */
+  align-items: center;      /* vertical center */
+  height: 100vh;            /* full screen height */
+}
+
+.video {
+  width: 500px;
+  height: auto;
+  display: block;
+  margin: 3.5rem auto;
+}
+
+main {
+  text-align: center;
+  font-size: 1.5rem;
+  max-width: 500px;
+}
+
+.server {
+  margin-bottom: 2rem;
+}
+
+.discord-link {
+  text-decoration: none;
+  color: #000;
+}
