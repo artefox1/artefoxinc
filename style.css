@@ -2,6 +2,11 @@
   box-sizing: border-box;
 }
 
+::selection {
+  background: #ffd52c;
+  color: #000; /* text color when selected */
+}
+
 body {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
