@@ -20,7 +20,8 @@ body {
 }
 
 .video {
-  width: 500px;
+  width: 100%;
+  max-width: 500px;
   height: auto;
   display: block;
   margin: 3.5rem auto;
