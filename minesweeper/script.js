@@ -128,6 +128,8 @@ function reveal(startX, startY) {
         y: startY
     });
 
+    board[startY][startX] = 13;
+
     console.log(queue.length)
     maxQueueSize = Math.max(maxQueueSize, queue.length);
 
@@ -161,7 +163,7 @@ function reveal(startX, startY) {
                         nx < WIDTH && ny < HEIGHT &&
                         board[ny][nx] === 9
                     ) {
-
+                        board[ny][nx] = 13;
 
                         queue.push({
                             x: nx,
