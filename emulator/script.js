@@ -321,6 +321,7 @@ function handleMMIO(addr, val, shouldPaint = true) {
     if (addr === state.trigPort) updatePixel(shouldPaint);
     if (state.doubleBuffered && addr === state.pushPort) {
         state.vram.set(state.backBuffer);
+        state.backBuffer.fill(0); 
         if (shouldPaint) renderCanvas();
     }
 }
