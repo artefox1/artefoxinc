@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SB CPU 3 Emulator</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- ============ LEFT: ASSEMBLER ============ -->
+        <section class="editor-section">
+            <div class="toolbar">
+                <div class="tool-left">
+                    <div class="btn-group">
+                        <button id="btn-run" class="btn primary">Run</button>
+                        <button id="btn-stop" class="btn">Stop</button>
+                        <button id="btn-step" class="btn">Step</button>
+                        <button id="btn-reset" class="btn">Reset</button>
+                    </div>
+                    <!-- line numbering toggle sits directly under Run/Stop/Step -->
+                    <div class="segmented" id="gutter-mode" title="Line numbering">
+                        <button data-gmode="line" class="active">Line Number</button>
+                        <button data-gmode="asm">PC Number</button>
+                    </div>
+                </div>
+                <div class="speed-control">
+                    <label class="field">
+                        <span>Target</span>
+                        <input type="number" id="speed" value="60">
+                        <span>Hz</span>
+                    </label>
+                    <label class="check"><input type="checkbox" id="unlimited-hz"> Unlimited</label>
+                    <span class="hz-readout"><span id="actual-hz">0</span> Hz</span>
+                </div>
+            </div>
+
+            <div class="editor-container">
+                <div id="gutter" class="gutter"></div>
+                <div class="code-wrap">
+                    <div id="active-line" class="active-line"></div>
+                    <pre id="highlight" class="highlight" aria-hidden="true"><code></code></pre>
+                    <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+                </div>
+            </div>
+
+            <div id="status-bar" class="status-bar">Ready</div>
+            <div class="col-resizer" id="col-resizer" title="Drag to resize"></div>
+        </section>
+
+        <!-- ============ CENTER: DISPLAY ============ -->
+        <section class="display-section">
+            <div class="presets-bar">
+                <span class="presets-label">Preset</span>
+                <select id="presets">
+                    <option value="default">Tutorial</option>
+                    <option value="mandelbrot">Mandelbrot Set</option>
+                    <option value="graph">Graphing Calculator</option>
+                </select>
+            </div>
+
+            <div class="display-stage">
+                <div id="screen-container">
+                    <canvas id="display-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="display-settings">
+                <div class="panel">
+                    <div class="panel-header">Display Configuration</div>
+                    <div class="config-grid">
+                        <label class="field-col">Mode
+                            <select id="disp-mode"><option value="mono">Monochrome</option><option value="color">Coloured</option></select>
+                        </label>
+                        <label class="check" id="mono-2x2-field"><input type="checkbox" id="mono-2x2"> 2x2 Pixels</label>
+                        <label class="field-col">X Resolution <input type="number" id="disp-res-x" value="24"></label>
+                        <label class="field-col">Y Resolution <input type="number" id="disp-res-y" value="12"></label>
+                        <label class="field-col">Start X (Binary) <input type="text" id="start-x" value="0000000"></label>
+                        <label class="field-col">Start Y (Binary) <input type="text" id="start-y" value="0000000"></label>
+                        <label class="check"><input type="checkbox" id="dec-x"> Decrement X</label>
+                        <label class="check"><input type="checkbox" id="dec-y"> Decrement Y</label>
+                        <label class="field-col">Plot pixel when writing to
+                            <select id="trig-port">
+                                <option value="60">Port 0 (60)</option>
+                                <option value="61">Port 1 (61)</option>
+                                <option value="62">Port 2 (62)</option>
+                                <option value="63" selected>Port 3 (63)</option>
+                            </select>
+                        </label>
+                        <label class="check"><input type="checkbox" id="double-buffer"> Double Buffered</label>
+                        <label class="field-col" id="push-port-field">Push display when writing to
+                            <select id="push-port">
+                                <option value="60">Port 0 (60)</option>
+                                <option value="61">Port 1 (61)</option>
+                                <option value="62" selected>Port 2 (62)</option>
+                                <option value="63">Port 3 (63)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- bit mapping and colour palette sit side by side -->
+                <div class="panel-row">
+                    <div class="panel">
+                        <div class="panel-header">Bit Mapping</div>
+                        <div id="bit-mapper" class="bit-mapper"></div>
+                    </div>
+                    <div class="panel" id="palette-panel">
+                        <div class="panel-header">Colour Palette</div>
+                        <div id="palette-config" class="palette-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ RIGHT: SYSTEM STATE ============ -->
+        <aside class="system-section">
+            <div class="col-resizer-right" id="col-resizer-right" title="Drag to resize"></div>
+
+            <!-- value format toggle sits above every state panel -->
+            <div class="view-format-bar">
+                <div class="segmented" id="view-mode">
+                    <button data-mode="hex" class="active">Hex</button>
+                    <button data-mode="bin">Bin</button>
+                    <button data-mode="dec">Dec</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">State</div>
+                <div class="state-row">
+                    <div class="pc-view">PC <span id="pc-val">0</span></div>
+                    <div id="flags" class="flags">
+                        <span class="flag" id="flag-c">C</span><span class="flag" id="flag-n">N</span><span class="flag" id="flag-z">Z</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Registers</div>
+                <div id="regs-grid" class="grid-view"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Memory</div>
+                <div id="mem-grid" class="grid-view mem-grid"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Inputs</div>
+                <div class="input-pad">
+                    <div id="bit-input-row" class="bit-row"></div>
+                    <div class="input-controls">
+                        <select id="in-port-sel">
+                            <option value="0">Port 0 (60)</option>
+                            <option value="1">Port 1 (61)</option>
+                            <option value="2">Port 2 (62)</option>
+                            <option value="3">Port 3 (63)</option>
+                        </select>
+                        <button id="btn-in-send" class="btn primary">Send</button>
+                    </div>
+                </div>
+                <div class="panel-subhead">Current Input States</div>
+                <div id="input-status-grid" class="grid-view"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Stack</div>
+                <div id="stack-view" class="stack-view"></div>
+            </div>
+        </aside>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
