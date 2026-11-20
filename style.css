@@ -59,11 +59,26 @@ main {
   transition: transform 0.15s ease;
 }
 
-.social-link svg {
+.social-link svg,
+.social-link img {
   width: clamp(24px, 2.2vw, 32px);
   height: clamp(24px, 2.2vw, 32px);
-  fill: currentColor;
   display: block;
+}
+
+.social-link svg {
+  fill: currentColor;
+}
+
+.social-link img {
+  width: clamp(32px, 2.6vw, 36px);
+  height: clamp(32px, 2.6vw, 36px);
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.social-link:has(img) {
+  margin-left: -8px;
 }
 
 .social-link:hover {
